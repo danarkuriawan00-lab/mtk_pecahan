@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Asesmen SDN 1 Gondang</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- KaTeX CSS & JS for rendering LaTeX math formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #0284c7;
+            --secondary-blue: #3b82f6;
+            --accent-green: #10b981;
+            --bg-gray: #f8fafc;
+        }
+
+        body {
+            background-color: #0f172a;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        /* Ambient glowing background decoration */
+        .bg-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -10%;
+            left: -10%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-right {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+            bottom: -10%;
+            right: -10%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            max-height: 850px;
+            background-color: #ffffff;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (min-width: 640px) {
+            .app-container {
+                height: 92vh;
+                border-radius: 28px;
+            }
+        }
+
+        .font-sahabat {
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 0.12em;
+            background: linear-gradient(to bottom, #0f172a, #334155);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.1));
+        }
+
+        .btn-masuk {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-masuk:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -5px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-nav {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #0369a1 100%);
+            border-radius: 14px;
+            color: white;
+            padding: 14px 22px;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-nav:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.3);
+        }
+
+        .option-item {
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #e2e8f0;
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 14px 16px;
+        }
+
+        .option-item:hover {
+            border-color: #cbd5e1;
+            background-color: #f8fafc;
+            transform: scale(1.01);
+        }
+
+        .selected-option {
+            background-color: #eff6ff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.15);
+        }
+
+        #loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(6px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: white;
+        }
+
+        .input-field {
+            background-color: #f8fafc;
+            color: #1e293b;
+            text-align: center;
+            font-weight: 600;
+            padding: 16px;
+            border-radius: 14px;
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary-blue);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 24px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Question Slide transition animation */
+        .slide-in {
+            animation: slideIn 0.25s ease-out;
+        }
+
+        @keyframes slideIn {
+            0% { transform: translateX(12px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Custom Scrollbar for app container */
+        .app-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .app-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .app-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* KaTeX Inline Display overrides */
+        .katex {
+            font-size: 1.1em !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-glow-right"></div>
+
+<div class="app-container p-6" id="app">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mb-4"></div>
+        <p class="font-bold text-lg" id="loading-text">Memproses Data...</p>
+    </div>
+
+    <!-- Top Action Bar (Mute Toggle) -->
+    <div class="flex justify-end items-center absolute top-4 right-4 z-20">
+        <button id="sound-toggle-btn" onclick="toggleSound()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2.5 rounded-full transition-all flex items-center justify-center shadow-sm active:scale-95" title="Mute/Unmute">
+            <svg id="sound-icon-on" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+            </svg>
+            <svg id="sound-icon-off" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zm12.95 2.121l-3.536-3.536m0 0L11.464 10m3.536 3.536L18.536 10M15 13.536l-3.536 3.536"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="flex flex-col items-center justify-center h-full my-auto py-4">
+        <div class="mb-6 animate-bounce">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiUAgnz3M-C0b4aP4NCccOVpRTBjimetBgZhyphenhyphenkGcMIcG3YY7RhacnjOZFFonylLQGbQ0LQHR7n4cOk7XN8mDb9YmRrXgJi5q7yZCEEKpQ4CYuB9WaZLCNw35_qVPvcRTizOMvZXsYVqmAOSfxDv9bUmpB9z_-2G3ecR_C1CONgsQ5-5U5NA2B9rpU4zfJnZ/w200-h200/sdn%20gng%201.png" 
+                 alt="Logo SDN 1 Gondang" 
+                 onerror="this.src='https://placehold.co/120x120/0284c7/ffffff?text=SDN+1+GDG'" 
+                 class="w-28 h-28 object-contain">
+        </div>
+
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-slate-800 leading-tight uppercase">Selamat Datang</h1>
+            <h2 class="text-5xl font-black mb-3 font-sahabat uppercase tracking-wide">Sahabat</h2>
+            <p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase px-4 leading-relaxed">
+                Sistem Asesmen Hasil Amanah Berprestasi Akurat & Terpercaya
+            </p>
+        </div>
+
+        <div class="w-full space-y-4">
+            <div>
+                <label class="block text-left text-xs font-bold text-slate-500 mb-1.5 uppercase ml-1">Nama Lengkap</label>
+                <input type="text" id="name" placeholder="NAMA LENGKAP SISWA" class="input-field uppercase">
+            </div>
+            <div>
+                <label class="block text-left text-xs font-bold text-slate-500 mb-1.5 uppercase ml-1">Nomor Absen</label>
+                <input type="number" id="absen" placeholder="CONTOH: 14" class="input-field">
+            </div>
+            <button onclick="startExam()" class="w-full py-4 mt-4 rounded-xl btn-masuk text-white font-bold text-lg shadow-lg uppercase tracking-wide active:scale-[0.98]">
+                Mulai Ujian
+            </button>
+        </div>
+        
+        <div class="mt-8 text-center">
+            <p class="text-[10px] text-slate-400 font-semibold uppercase">SDN 1 GONDANG - SRAGEN</p>
+        </div>
+    </div>
+
+    <!-- Exam Screen -->
+    <div id="exam-screen" class="hidden flex flex-col h-full">
+        <!-- Progress Bar & Top Navigation Info -->
+        <div class="w-full bg-slate-100 rounded-full h-2 mb-4">
+            <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+            <span class="bg-blue-600 text-white px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                Soal <span id="current-number">1</span> / <span id="total-questions">0</span>
+            </span>
+            
+            <div class="flex items-center gap-2">
+                <!-- Palette Icon Button to Toggle Grid -->
+                <button onclick="toggleGridModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-xl transition-all shadow-sm active:scale-90" title="Navigasi Soal">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                </button>
+                <div class="bg-slate-100 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4 text-slate-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="timer" class="text-slate-700 font-mono font-bold text-xs">00:00</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Question Container -->
+        <div class="flex-grow flex flex-col justify-between overflow-y-auto pr-1">
+            <div id="question-wrapper" class="slide-in">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-5 border-l-4 border-blue-500 shadow-sm">
+                    <div id="question-text" class="text-base font-bold text-slate-800 leading-relaxed">Memuat...</div>
+                </div>
+                <div id="options-container" class="space-y-3 mb-4"></div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-100 pb-2 gap-3">
+            <button onclick="prevQuestion()" id="prev-btn" class="btn-nav flex-1 opacity-50 active:scale-[0.97]" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                KEMBALI
+            </button>
+            <button onclick="handleNext()" class="btn-nav flex-1 active:scale-[0.97]" id="next-btn">
+                LANJUT
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Result / Score Screen -->
+    <div id="result-screen" class="hidden flex flex-col items-center justify-center h-full my-auto py-4">
+        <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-inner">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 uppercase mb-1">Ujian Selesai!</h2>
+        <p class="text-xs text-slate-500 font-semibold mb-6 uppercase">Terima kasih telah mengerjakan dengan jujur</p>
+
+        <div class="w-full bg-slate-50 rounded-2xl p-5 border border-slate-200 mb-6 space-y-3">
+            <div class="flex justify-between text-xs text-slate-600 border-b border-slate-200 pb-2">
+                <span>Nama Siswa:</span>
+                <span id="res-name" class="font-bold text-slate-800 uppercase">-</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-600 border-b border-slate-200 pb-2">
+                <span>No. Absen:</span>
+                <span id="res-absen" class="font-bold text-slate-800">-</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-600 border-b border-slate-200 pb-2">
+                <span>Durasi Ujian:</span>
+                <span id="res-duration" class="font-bold text-slate-800">-</span>
+            </div>
+            <div class="flex justify-between items-center text-sm pt-1">
+                <span class="font-bold text-slate-700">Nilai Akhir:</span>
+                <span id="res-score" class="text-3xl font-black text-blue-600">0</span>
+            </div>
+        </div>
+
+        <div class="w-full space-y-3">
+            <button onclick="toggleAnswerKeyModal()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm tracking-wide transition-all uppercase shadow-md active:scale-[0.97]">
+                Lihat Pembahasan & Kunci Jawaban
+            </button>
+            <button onclick="restartExam()" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm tracking-wide transition-all uppercase active:scale-[0.97]">
+                Kembali ke Beranda
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ALERT/NOTIFICATION MODAL -->
+<div id="alert-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 id="alert-title" class="text-lg font-bold text-slate-800 mb-1">Informasi</h3>
+        <p id="alert-message" class="text-sm text-slate-500 mb-5 leading-relaxed">Pesan pemberitahuan.</p>
+        <button onclick="hideAlert()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm tracking-wide transition-all uppercase active:scale-[0.97]">
+            Mengerti
+        </button>
+    </div>
+</div>
+
+<!-- EXAM CONFIRMATION MODAL -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800 mb-1">Kirim Jawaban?</h3>
+        <p id="confirm-warning-text" class="text-sm text-slate-500 mb-5 leading-relaxed">Pastikan semua pertanyaan sudah terisi dengan teliti.</p>
+        <div class="flex gap-3">
+            <button onclick="hideConfirm()" class="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50 transition-all uppercase active:scale-[0.97]">Batal</button>
+            <button onclick="finishExam()" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm transition-all uppercase shadow-md shadow-emerald-100 active:scale-[0.97]">Kirim</button>
+        </div>
+    </div>
+</div>
+
+<!-- QUESTION NAVIGATOR GRID MODAL -->
+<div id="grid-modal" class="modal-overlay">
+    <div class="modal-content max-w-[420px] !p-5">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-base font-bold text-slate-800">Peta Navigasi Soal</h3>
+            <button onclick="toggleGridModal()" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-5 gap-2 max-h-[280px] overflow-y-auto p-1 text-xs" id="grid-box-container">
+            <!-- Dynamically populated buttons -->
+        </div>
+        <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 font-medium">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-md bg-blue-100 border border-blue-400 block"></span> Terisi</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-md bg-slate-50 border border-slate-200 block"></span> Belum</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-md bg-slate-800 block"></span> Aktif</span>
+        </div>
+    </div>
+</div>
+
+<!-- ANSWER KEY MODAL -->
+<div id="answer-key-modal" class="modal-overlay">
+    <div class="modal-content max-w-[440px] !p-5 text-left flex flex-col h-[85vh]">
+        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-800">Kunci Jawaban & Pembahasan</h3>
+            <button onclick="toggleAnswerKeyModal()" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div id="answer-key-container" class="flex-grow overflow-y-auto pr-1 space-y-3">
+            <!-- Dynamically populated review items -->
+        </div>
+        <button onclick="toggleAnswerKeyModal()" class="w-full mt-3 py-3 bg-slate-800 text-white rounded-xl font-bold text-xs uppercase tracking-wider text-center">
+            Tutup
+        </button>
+    </div>
+</div>
+
+<script>
+    // URL Google Apps Script Anda
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz1sq6Ks2rC3lIdcA3i9TRLPebUdny0st73zmcZXI7HVVSZ63hxJWsz3_rVOH3L0gdO/exec'; 
+
+    const questions = [
+        // --- SOAL MATEMATIKA PECAHAN & PECAHAN SENILAI ---
+        {
+            id: 1,
+            text: "Bentuk pecahan paling sederhana dari \\frac{12}{18} adalah ....",
+            options: [
+                { id: 'A', text: '\\frac{2}{3}' },
+                { id: 'B', text: '\\frac{3}{4}' },
+                { id: 'C', text: '\\frac{4}{6}' },
+                { id: 'D', text: '\\frac{3}{5}' }
+            ],
+            correct: 'A'
+        },
+        {
+            id: 2,
+            text: "Pecahan berikut yang senilai dengan \\frac{3}{5} adalah ....",
+            options: [
+                { id: 'A', text: '\\frac{6}{15}' },
+                { id: 'B', text: '\\frac{9}{15}' },
+                { id: 'C', text: '\\frac{12}{15}' },
+                { id: 'D', text: '\\frac{15}{20}' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 3,
+            text: "Pecahan yang tidak senilai dengan \\frac{4}{8} adalah ....",
+            options: [
+                { id: 'A', text: '\\frac{1}{2}' },
+                { id: 'B', text: '\\frac{2}{4}' },
+                { id: 'C', text: '\\frac{6}{12}' },
+                { id: 'D', text: '\\frac{3}{8}' }
+            ],
+            correct: 'D'
+        },
+        {
+            id: 4,
+            text: "Nilai n yang memenuhi persamaan \\frac{5}{7} = \\frac{n}{35} adalah ....",
+            options: [
+                { id: 'A', text: '15' },
+                { id: 'B', text: '20' },
+                { id: 'C', text: '25' },
+                { id: 'D', text: '30' }
+            ],
+            correct: 'C'
+        },
+        {
+            id: 5,
+            text: "Tanda yang tepat untuk mengisi titik-titik pada \\frac{3}{4} ... \\frac{5}{6} adalah ....",
+            options: [
+                { id: 'A', text: '>' },
+                { id: 'B', text: '<' },
+                { id: 'C', text: '=' },
+                { id: 'D', text: '≥' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 6,
+            text: "Bentuk desimal dari pecahan \\frac{7}{8} adalah ....",
+            options: [
+                { id: 'A', text: '0,75' },
+                { id: 'B', text: '0,85' },
+                { id: 'C', text: '0,875' },
+                { id: 'D', text: '0,925' }
+            ],
+            correct: 'C'
+        },
+
+        // --- SOAL PECAHAN CAMPURAN ---
+        {
+            id: 7,
+            text: "Bentuk pecahan biasa dari 3\\frac{2}{5} adalah ....",
+            options: [
+                { id: 'A', text: '\\frac{11}{5}' },
+                { id: 'B', text: '\\frac{13}{5}' },
+                { id: 'C', text: '\\frac{17}{5}' },
+                { id: 'D', text: '\\frac{19}{5}' }
+            ],
+            correct: 'C'
+        },
+        {
+            id: 8,
+            text: "Bentuk pecahan campuran dari \\frac{23}{4} adalah ....",
+            options: [
+                { id: 'A', text: '5\\frac{1}{4}' },
+                { id: 'B', text: '5\\frac{3}{4}' },
+                { id: 'C', text: '6\\frac{1}{4}' },
+                { id: 'D', text: '6\\frac{3}{4}' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 9,
+            text: "Hasil dari 2\\frac{1}{3} + 1\\frac{3}{4} adalah ....",
+            options: [
+                { id: 'A', text: '3\\frac{4}{7}' },
+                { id: 'B', text: '3\\frac{1}{12}' },
+                { id: 'C', text: '4\\frac{1}{12}' },
+                { id: 'D', text: '4\\frac{5}{12}' }
+            ],
+            correct: 'C'
+        },
+        {
+            id: 10,
+            text: "Hasil pengurangan dari 4\\frac{1}{2} - 1\\frac{2}{3} adalah ....",
+            options: [
+                { id: 'A', text: '2\\frac{5}{6}' },
+                { id: 'B', text: '2\\frac{1}{6}' },
+                { id: 'C', text: '3\\frac{1}{6}' },
+                { id: 'D', text: '3\\frac{5}{6}' }
+            ],
+            correct: 'A'
+        },
+        {
+            id: 11,
+            text: "Hasil kali dari 1\\frac{1}{2} × 2\\frac{2}{3} adalah ....",
+            options: [
+                { id: 'A', text: '3' },
+                { id: 'B', text: '4' },
+                { id: 'C', text: '3\\frac{1}{3}' },
+                { id: 'D', text: '4\\frac{1}{2}' }
+            ],
+            correct: 'B'
+        },
+
+        // --- SOAL OPERASI HITUNG PECAHAN CAMPURAN ---
+        {
+            id: 12,
+            text: "Hasil dari 3\\frac{1}{2} + 2\\frac{1}{4} - 1\\frac{1}{3} adalah ....",
+            options: [
+                { id: 'A', text: '4\\frac{5}{12}' },
+                { id: 'B', text: '4\\frac{7}{12}' },
+                { id: 'C', text: '5\\frac{5}{12}' },
+                { id: 'D', text: '5\\frac{7}{12}' }
+            ],
+            correct: 'A'
+        },
+        {
+            id: 13,
+            text: "Hasil dari 2\\frac{1}{4} × 1\\frac{1}{3} : \\frac{1}{2} adalah ....",
+            options: [
+                { id: 'A', text: '3' },
+                { id: 'B', text: '4,5' },
+                { id: 'C', text: '6' },
+                { id: 'D', text: '8' }
+            ],
+            correct: 'C'
+        },
+        {
+            id: 14,
+            text: "Ibu membeli tepung terigu sebesar 2\\frac{1}{2} kg, kemudian membeli lagi 1\\frac{3}{4} kg. Jika tepung tersebut digunakan untuk membuat kue sebanyak 3\\frac{1}{8} kg, sisa tepung Ibu adalah ....",
+            options: [
+                { id: 'A', text: '1\\frac{1}{8} kg' },
+                { id: 'B', text: '1\\frac{3}{8} kg' },
+                { id: 'C', text: '1\\frac{5}{8} kg' },
+                { id: 'D', text: '2\\frac{1}{8} kg' }
+            ],
+            correct: 'A'
+        },
+        {
+            id: 15,
+            text: "Hasil dari 5\\frac{1}{3} : 1\\frac{1}{3} + 2\\frac{1}{2} adalah ....",
+            options: [
+                { id: 'A', text: '6\\frac{1}{2}' },
+                { id: 'B', text: '5\\frac{1}{2}' },
+                { id: 'C', text: '4\\frac{1}{2}' },
+                { id: 'D', text: '3\\frac{1}{2}' }
+            ],
+            correct: 'A'
+        },
+        {
+            id: 16,
+            text: "Nilai dari (3\\frac{3}{4} - 1\\frac{1}{2}) × 1\\frac{1}{3} adalah ....",
+            options: [
+                { id: 'A', text: '2' },
+                { id: 'B', text: '3' },
+                { id: 'C', text: '4' },
+                { id: 'D', text: '5' }
+            ],
+            correct: 'B'
+        },
+
+        // --- SOAL OPERASI KOMPLEKS ---
+        {
+            id: 17,
+            text: "Hasil dari (\\frac{1}{2} × 2\\frac{1}{3}) + (6 : 2) adalah ....",
+            options: [
+                { id: 'A', text: '3\\frac{1}{6}' },
+                { id: 'B', text: '4\\frac{1}{6}' },
+                { id: 'C', text: '3\\frac{7}{6}' },
+                { id: 'D', text: '4\\frac{5}{6}' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 18,
+            text: "Hasil dari (\\frac{3}{4} × 1\\frac{1}{3}) + (8 : 4) adalah ....",
+            options: [
+                { id: 'A', text: '2' },
+                { id: 'B', text: '3' },
+                { id: 'C', text: '4' },
+                { id: 'D', text: '5' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 19,
+            text: "Hasil dari (\\frac{2}{5} × 3\\frac{1}{3}) + (12 : 3) adalah ....",
+            options: [
+                { id: 'A', text: '4\\frac{1}{3}' },
+                { id: 'B', text: '5\\frac{1}{3}' },
+                { id: 'C', text: '5\\frac{2}{3}' },
+                { id: 'D', text: '6\\frac{1}{3}' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 20,
+            text: "Hasil dari (\\frac{1}{3} × 4\\frac{1}{2}) + (10 : 2) adalah ....",
+            options: [
+                { id: 'A', text: '5,5' },
+                { id: 'B', text: '6,5' },
+                { id: 'C', text: '7,5' },
+                { id: 'D', text: '8,5' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 21,
+            text: "Hasil dari (\\frac{4}{7} × 2\\frac{5}{8}) + (15 : 5) adalah ....",
+            options: [
+                { id: 'A', text: '3\\frac{1}{2}' },
+                { id: 'B', text: '4\\frac{1}{2}' },
+                { id: 'C', text: '4' },
+                { id: 'D', text: '5' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 22,
+            text: "Nilai dari (\\frac{2}{3} × 2\\frac{1}{4}) + (16 : 4) adalah ....",
+            options: [
+                { id: 'A', text: '5' },
+                { id: 'B', text: '5\\frac{1}{2}' },
+                { id: 'C', text: '6' },
+                { id: 'D', text: '6\\frac{1}{2}' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 23,
+            text: "Hasil dari (\\frac{3}{5} × 2\\frac{1}{2}) + (20 : 5) adalah ....",
+            options: [
+                { id: 'A', text: '4\\frac{1}{2}' },
+                { id: 'B', text: '5' },
+                { id: 'C', text: '5\\frac{1}{2}' },
+                { id: 'D', text: '6' }
+            ],
+            correct: 'C'
+        },
+        {
+            id: 24,
+            text: "Nilai dari (\\frac{5}{6} × 1\\frac{1}{5}) + (18 : 6) adalah ....",
+            options: [
+                { id: 'A', text: '3' },
+                { id: 'B', text: '4' },
+                { id: 'C', text: '5' },
+                { id: 'D', text: '6' }
+            ],
+            correct: 'B'
+        },
+        {
+            id: 25,
+            text: "Hasil dari (\\frac{3}{8} × 4\\frac{4}{9}) + (24 : 8) adalah ....",
+            options: [
+                { id: 'A', text: '4\\frac{1}{3}' },
+                { id: 'B', text: '4\\frac{2}{3}' },
+                { id: 'C', text: '5\\frac{1}{3}' },
+                { id: 'D', text: '5\\frac{2}{3}' }
+            ],
+            correct: 'B'
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let userAnswers = {};
+    let userData = { name: '', absen: '' };
+    let startTime;
+    let timerInterval;
+    let isSoundMuted = false;
+    let finalDuration = "00:00";
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playBeep(type) {
+        if (isSoundMuted) return;
+        try {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.08);
+            } else if (type === 'success') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); 
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); 
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.4);
+            } else if (type === 'alert') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.25);
+            }
+        } catch (e) {
+            console.log("Audio API not active: ", e);
+        }
+    }
+
+    function toggleSound() {
+        isSoundMuted = !isSoundMuted;
+        const iconOn = document.getElementById('sound-icon-on');
+        const iconOff = document.getElementById('sound-icon-off');
+        if (isSoundMuted) {
+            iconOn.classList.add('hidden');
+            iconOff.classList.remove('hidden');
+        } else {
+            iconOn.classList.remove('hidden');
+            iconOff.classList.add('hidden');
+            playBeep('click');
+        }
+    }
+
+    function formatMathString(rawStr) {
+        if (!rawStr) return '';
+        if (!window.katex) return rawStr;
+
+        // Replace LaTeX backslashes expressions into formatted HTML
+        try {
+            return rawStr.replace(/(\\frac\{[^}]+\}\{[^}]+\}|\d+\\frac\{[^}]+\}\{[^}]+\}|\\[a-zA-Z]+|[><=≥≤])/g, function(match) {
+                // Return rendered KaTeX
+                return katex.renderToString(match, { throwOnError: false, displayMode: false });
+            });
+        } catch(e) {
+            return rawStr;
+        }
+    }
+
+    function showAlert(title, message) {
+        playBeep('alert');
+        document.getElementById('alert-title').innerText = title;
+        document.getElementById('alert-message').innerText = message;
+        document.getElementById('alert-modal').style.display = 'flex';
+    }
+
+    function hideAlert() {
+        playBeep('click');
+        document.getElementById('alert-modal').style.display = 'none';
+    }
+
+    function toggleGridModal() {
+        playBeep('click');
+        const gridModal = document.getElementById('grid-modal');
+        if (gridModal.style.display === 'flex') {
+            gridModal.style.display = 'none';
+        } else {
+            renderGridPalette();
+            gridModal.style.display = 'flex';
+        }
+    }
+
+    function renderGridPalette() {
+        const container = document.getElementById('grid-box-container');
+        container.innerHTML = '';
+        
+        questions.forEach((q, idx) => {
+            const btn = document.createElement('button');
+            const isSelected = userAnswers[idx] !== undefined;
+            const isActive = currentQuestionIndex === idx;
+
+            btn.innerText = idx + 1;
+            
+            let btnClass = "py-3 rounded-xl font-bold text-center transition-all active:scale-90 ";
+            if (isActive) {
+                btnClass += "bg-slate-800 text-white shadow-md ring-2 ring-slate-400";
+            } else if (isSelected) {
+                btnClass += "bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200";
+            } else {
+                btnClass += "bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100";
+            }
+
+            btn.className = btnClass;
+            btn.onclick = () => {
+                jumpToQuestion(idx);
+                toggleGridModal();
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    function jumpToQuestion(index) {
+        playBeep('click');
+        currentQuestionIndex = index;
+        renderQuestion();
+    }
+
+    function startExam() {
+        userData.name = document.getElementById('name').value.trim();
+        userData.absen = document.getElementById('absen').value.trim();
+
+        if (!userData.name || !userData.absen) {
+            showAlert("Isi Identitas", "Harap isi nama lengkap dan nomor absen dengan benar!");
+            return;
+        }
+
+        playBeep('success');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('exam-screen').classList.remove('hidden');
+        document.getElementById('total-questions').innerText = questions.length;
+        
+        startTime = new Date();
+        timerInterval = setInterval(updateTimer, 1000);
+        renderQuestion();
+    }
+
+    function updateTimer() {
+        const diff = Math.floor((new Date() - startTime) / 1000);
+        const m = Math.floor(diff / 60).toString().padStart(2, '0');
+        const s = (diff % 60).toString().padStart(2, '0');
+        finalDuration = `${m}:${s}`;
+        document.getElementById('timer').innerText = finalDuration;
+    }
+
+    function renderQuestion() {
+        const q = questions[currentQuestionIndex];
+        document.getElementById('current-number').innerText = currentQuestionIndex + 1;
+        document.getElementById('question-text').innerHTML = formatMathString(q.text);
+        document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+
+        // Smooth slide-in transition
+        const qWrapper = document.getElementById('question-wrapper');
+        qWrapper.classList.remove('slide-in');
+        void qWrapper.offsetWidth; 
+        qWrapper.classList.add('slide-in');
+
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const isSelected = userAnswers[currentQuestionIndex] === opt.id;
+            const div = document.createElement('div');
+            div.className = `option-item flex items-center gap-3 ${isSelected ? 'selected-option' : ''}`;
+            
+            div.onclick = () => selectOption(opt.id);
+
+            const badge = document.createElement('span');
+            badge.className = `w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
+                isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+            }`;
+            badge.innerText = opt.id;
+
+            const textDiv = document.createElement('div');
+            textDiv.className = "flex-grow font-semibold text-slate-700 text-sm";
+            textDiv.innerHTML = formatMathString(opt.text);
+
+            div.appendChild(badge);
+            div.appendChild(textDiv);
+            container.appendChild(div);
+        });
+
+        // Update Nav Buttons State
+        const prevBtn = document.getElementById('prev-btn');
+        if (currentQuestionIndex === 0) {
+            prevBtn.disabled = true;
+            prevBtn.classList.add('opacity-50');
+        } else {
+            prevBtn.disabled = false;
+            prevBtn.classList.remove('opacity-50');
+        }
+
+        const nextBtn = document.getElementById('next-btn');
+        if (currentQuestionIndex === questions.length - 1) {
+            nextBtn.innerHTML = `SELESAI <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>`;
+            nextBtn.classList.remove('btn-nav');
+            nextBtn.classList.add('py-3.5', 'px-5', 'bg-emerald-600', 'hover:bg-emerald-700', 'text-white', 'font-bold', 'rounded-2xl', 'flex', 'items-center', 'justify-center', 'gap-2');
+        } else {
+            nextBtn.innerHTML = `LANJUT <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>`;
+            nextBtn.className = "btn-nav flex-1 active:scale-[0.97]";
+        }
+    }
+
+    function selectOption(optionId) {
+        playBeep('click');
+        userAnswers[currentQuestionIndex] = optionId;
+        renderQuestion();
+    }
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            playBeep('click');
+            currentQuestionIndex--;
+            renderQuestion();
+        }
+    }
+
+    function handleNext() {
+        playBeep('click');
+        if (currentQuestionIndex < questions.length - 1) {
+            currentQuestionIndex++;
+            renderQuestion();
+        } else {
+            // Confirm Submission
+            showConfirm();
+        }
+    }
+
+    function showConfirm() {
+        playBeep('alert');
+        const answeredCount = Object.keys(userAnswers).length;
+        const total = questions.length;
+        const warningText = document.getElementById('confirm-warning-text');
+
+        if (answeredCount < total) {
+            warningText.innerHTML = `Kamu baru menjawab <b class="text-amber-600">${answeredCount} dari ${total} soal</b>. Yakin ingin mengirim sekarang?`;
+        } else {
+            warningText.innerText = "Semua pertanyaan telah dijawab. Yakin ingin menyelesaikan ujian?";
+        }
+
+        document.getElementById('confirm-modal').style.display = 'flex';
+    }
+
+    function hideConfirm() {
+        playBeep('click');
+        document.getElementById('confirm-modal').style.display = 'none';
+    }
+
+    function finishExam() {
+        hideConfirm();
+        clearInterval(timerInterval);
+
+        document.getElementById('loading-overlay').style.display = 'flex';
+        document.getElementById('loading-text').innerText = "Mengirimkan Hasil Ujian...";
+
+        // Calculate Score
+        let correctCount = 0;
+        questions.forEach((q, idx) => {
+            if (userAnswers[idx] === q.correct) {
+                correctCount++;
+            }
+        });
+
+        const score = Math.round((correctCount / questions.length) * 100);
+
+        // Prepare POST payload
+        const payload = {
+            nama: userData.name,
+            absen: userData.absen,
+            durasi: finalDuration,
+            benar: correctCount,
+            total: questions.length,
+            nilai: score,
+            jawaban: JSON.stringify(userAnswers)
+        };
+
+        // Post request to Google Apps Script
+        fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            showResultScreen(score);
+        }).catch((err) => {
+            console.warn("GAS Submission warning/offline: ", err);
+            // Display result regardless to prevent losing student progress
+            showResultScreen(score);
+        });
+    }
+
+    function showResultScreen(score) {
+        document.getElementById('loading-overlay').style.display = 'none';
+        document.getElementById('exam-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        document.getElementById('res-name').innerText = userData.name;
+        document.getElementById('res-absen').innerText = userData.absen;
+        document.getElementById('res-duration').innerText = finalDuration;
+        document.getElementById('res-score').innerText = score;
+
+        playBeep('success');
+    }
+
+    function toggleAnswerKeyModal() {
+        playBeep('click');
+        const modal = document.getElementById('answer-key-modal');
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        } else {
+            renderAnswerKey();
+            modal.style.display = 'flex';
+        }
+    }
+
+    function renderAnswerKey() {
+        const container = document.getElementById('answer-key-container');
+        container.innerHTML = '';
+
+        questions.forEach((q, idx) => {
+            const userAns = userAnswers[idx] || 'Belum Dijawab';
+            const isCorrect = userAns === q.correct;
+
+            const div = document.createElement('div');
+            div.className = `p-3 rounded-xl border text-xs leading-relaxed ${
+                isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
+            }`;
+
+            const qNum = document.createElement('div');
+            qNum.className = "font-bold text-slate-800 mb-1 flex justify-between";
+            qNum.innerHTML = `<span>Soal #${idx + 1}</span> <span class="${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${isCorrect ? 'BENAR' : 'SALAH'}</span>`;
+
+            const qText = document.createElement('div');
+            qText.className = "text-slate-700 mb-2 font-medium";
+            qText.innerHTML = formatMathString(q.text);
+
+            const ansInfo = document.createElement('div');
+            ansInfo.className = "text-[11px] space-y-0.5 border-t border-slate-200/60 pt-1.5";
+            ansInfo.innerHTML = `
+                <div>Jawaban Kamu: <b class="${isCorrect ? 'text-emerald-700' : 'text-rose-700'}">${userAns}</b></div>
+                <div>Kunci Jawaban: <b class="text-emerald-700">${q.correct}</b></div>
+            `;
+
+            div.appendChild(qNum);
+            div.appendChild(qText);
+            div.appendChild(ansInfo);
+            container.appendChild(div);
+        });
+    }
+
+    function restartExam() {
+        playBeep('click');
+        userAnswers = {};
+        currentQuestionIndex = 0;
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('name').value = '';
+        document.getElementById('absen').value = '';
+    }
+</script>
+
+</body>
+</html>
